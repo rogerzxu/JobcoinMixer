@@ -62,9 +62,9 @@ Edge cases
 ### Configuration
 The following configuration options are available in `conf/application.conf`
 ```
-rxu.jobcoin.mixer.fee = ".05" #5 percent. Must be a number the 1 is evenly divisible by
+rxu.jobcoin.mixer.fee = ".05" #5 percent.
 rxu.jobcoin.mixer.transferInterval = 10 #seconds
-rxu.jobcoin.mixer.transferIncrements = ".1" #10 percent every interval
+rxu.jobcoin.mixer.transferIncrements = ".1" #10 percent every interval. Should be a number the 1 is evenly divisible by.
 rxu.jobcoin.mixer.houseAddress = "ROGERS_HOUSE"
 rxu.jobcoin.mixer.revenueAddress = "ROGERS_REVENUE_FROM_FEES"
 
