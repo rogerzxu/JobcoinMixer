@@ -1,0 +1,2 @@
+GET         /           @rxu.jobcoin.mixer.controller.MixerController.index
+POST        /mix        @rxu.jobcoin.mixer.controller.MixerController.getDepositAddress
