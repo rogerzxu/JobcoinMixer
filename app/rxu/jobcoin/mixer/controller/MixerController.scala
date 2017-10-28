@@ -48,7 +48,7 @@ class MixerController @Inject()(
                 depositAddress = Some(mixerService.createMixerDepositAddress(nonEmptyAddresses))
               )
             ))
-            else BadRequest(Json.toJson(
+            else Conflict(Json.toJson(
               MixAddressesResponse(
                 status = "ERROR",
                 error = Some("Address(es) have either been used or were unable to be validated"),
