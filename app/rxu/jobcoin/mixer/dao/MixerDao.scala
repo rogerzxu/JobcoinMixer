@@ -22,23 +22,23 @@ class MixerDao @Inject()(
   //depositAddress is a random UUID, so it serves as a convenient key
   private val store = mutable.HashMap[String,MixerRecord]()
 
-  def put(depositAddress: String, mixerRecord: MixerRecord): Unit = {
+  def put(depositAddress: String, mixerRecord: MixerRecord): Unit = synchronized {
     Logger.info(s"Storing record $mixerRecord")
     store.put(depositAddress, mixerRecord)
   }
 
-  def get(depositAddress: String): MixerRecord = {
+  def get(depositAddress: String): MixerRecord = synchronized {
     store(depositAddress)
   }
 
   def list: Seq[MixerRecord] = store.values.toSeq
 
-  def remove(depositAddress: String): Unit = {
+  def remove(depositAddress: String): Unit = synchronized {
     val removed = store.remove(depositAddress)
     Logger.info(s"Removed record $removed")
   }
 
-  def update(depositAddress: String, mixerRecord: MixerRecord): Option[MixerRecord] = {
+  def update(depositAddress: String, mixerRecord: MixerRecord): Option[MixerRecord] = synchronized {
     Logger.info(s"Storing record $mixerRecord")
     store.put(depositAddress, mixerRecord)
   }
