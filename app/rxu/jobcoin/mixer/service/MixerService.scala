@@ -78,29 +78,30 @@ class MixerService @Inject()(
   def transferIncrements: Future[Unit] = {
     val recordsInProgress = mixerDao.list.filter(_.status == Status.TRANSFERRING)
     for {
-      _ <- Future.sequence(recordsInProgress flatMap transferToCustomer)
+      _ <- Future.sequence(recordsInProgress map transferToCustomer)
     } yield ()
   }
 
-  private def transferToCustomer(record: MixerRecord): Set[Future[Unit]] = {
+  private def transferToCustomer(record: MixerRecord): Future[Unit] = {
     val transferAmount = config.transferIncrements * (1 - config.fee) * record.originalAmount / record.toAddresses.size
     val feeAmount = config.fee * record.originalAmount / record.toAddresses.size / config.numTransfersForCompletion
-    record.toAddresses map { toAddress =>
-      (for {
-        _ <- jobcoinClient.createTransaction(config.houseAddress, toAddress, transferAmount.toString)
-        _ <- jobcoinClient.createTransaction(config.houseAddress, config.revenueAddress, feeAmount.toString)
-      } yield {
-        val updatedRecord = mixerDao.get(record.depositAddress)
-        val transferredPercent = updatedRecord.transferredPercent + (config.transferIncrements / record.toAddresses.size)
-        val status = if (isComplete(transferredPercent)) Status.COMPLETE else Status.TRANSFERRING
-        mixerDao.update(record.depositAddress, updatedRecord.copy(
-          transferredPercent = transferredPercent,
-          status = status
-        ))
-        Logger.info(s"Transferred $transferredPercent for $record")
-      }) recover {
-        case ex: TransactionException => Logger.error(s"Failed to make transaction for $record", ex)
-      }
+    (for {
+      _ <- Future.sequence(record.toAddresses map { toAddress =>
+        jobcoinClient.createTransaction(config.houseAddress, toAddress, transferAmount.toString)
+      })
+      _ <- Future.sequence(record.toAddresses map { toAddress =>
+        jobcoinClient.createTransaction(config.houseAddress, config.revenueAddress, feeAmount.toString)
+      })
+    } yield {
+      val transferredPercent = record.transferredPercent + config.transferIncrements
+      val status = if (isComplete(transferredPercent)) Status.COMPLETE else Status.TRANSFERRING
+      mixerDao.update(record.depositAddress, record.copy(
+        transferredPercent = transferredPercent,
+        status = status
+      ))
+      Logger.info(s"Transferred $transferredPercent for $record")
+    }) recover {
+      case ex: TransactionException => Logger.error(s"Failed to make transaction for $record", ex)
     }
   }
 
